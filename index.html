@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enhanced Attendance System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f0f2f5;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    input, select {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 8px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+    }
+
+    .present {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .absent {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .late {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .delete-btn {
+      background-color: red;
+    }
+
+    .delete-btn:hover {
+      background-color: darkred;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Student Attendance Tracker</h1>
+
+    <input type="text" id="newStudent" placeholder="Enter student name">
+    <button onclick="addStudent()">Add Student</button>
+
+    <table id="attendanceTable">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <!-- Dates will be inserted here -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Students and status will appear here -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const students = ["Aishwarya", "veena", "Sonu", "Ramya","Asritha"];
+    const dates = getRecentDates(8); // last 5 days
+    const attendanceData = {}; // { studentName: { date: status, ... } }
+
+    function getRecentDates(count) {
+      const result = [];
+      const today = new Date();
+      for (let i = 0; i < count; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        result.unshift(d.toLocaleDateString());
+      }
+      return result;
+    }
+
+    function renderTable() {
+      const theadRow = document.querySelector("#attendanceTable thead tr");
+      const tbody = document.querySelector("#attendanceTable tbody");
+      theadRow.innerHTML = "<th>Student Name</th>";
+      dates.forEach(date => {
+        theadRow.innerHTML += `<th>${date}</th>`;
+      });
+      theadRow.innerHTML += `<th>Progress</th><th>Actions</th>`;
+
+      tbody.innerHTML = "";
+      students.forEach(student => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${student}</td>`;
+
+        if (!attendanceData[student]) attendanceData[student] = {};
+
+        let presentCount = 0;
+
+        dates.forEach(date => {
+          const currentStatus = attendanceData[student][date] || "absent";
+          if (currentStatus === "present") presentCount++;
+
+          row.innerHTML += `
+            <td>
+              <select onchange="updateStatus('${student}', '${date}', this.value)" class="${currentStatus}">
+                <option value="present" ${currentStatus === "present" ? "selected" : ""}>Present</option>
+                <option value="absent" ${currentStatus === "absent" ? "selected" : ""}>Absent</option>
+                <option value="late" ${currentStatus === "late" ? "selected" : ""}>Late</option>
+              </select>
+            </td>`;
+        });
+
+        const totalDays = dates.length;
+        const progressPercent = ((presentCount / totalDays) * 100).toFixed(0);
+        row.innerHTML += `<td><strong>${presentCount}/${totalDays} (${progressPercent}%)</strong></td>`;
+
+        row.innerHTML += `<td><button class="delete-btn" onclick="removeStudent('${student}')">Delete</button></td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateStatus(student, date, status) {
+      attendanceData[student][date] = status;
+      renderTable(); // refresh to reflect styles
+    }
+
+    function addStudent() {
+      const nameInput = document.getElementById("newStudent");
+      const name = nameInput.value.trim();
+      if (name && !students.includes(name)) {
+        students.push(name);
+        attendanceData[name] = {};
+        renderTable();
+        nameInput.value = '';
+      } else {
+        alert("Invalid or duplicate student name.");
+      }
+    }
+
+    function removeStudent(name) {
+      const index = students.indexOf(name);
+      if (index !== -1) {
+        students.splice(index, 1);
+        delete attendanceData[name];
+        renderTable();
+      }
+    }
+
+    // Initialize
+    renderTable();
+  </script>
+</body>
+</html>
